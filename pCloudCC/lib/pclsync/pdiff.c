@@ -688,6 +688,7 @@ static psync_socket *get_connected_socket(){
           P_STR(EPARAM_MAC, macAddr)
         }
       };
+      char *errMsg = NULL;
       intRes = create_backend_event(
         apiserver,
         INST_EVENT_CATEG,
@@ -697,7 +698,8 @@ static psync_socket *get_connected_socket(){
         P_OS_ID,
         rawtime,
         &params,
-        res);
+        &errMsg);
+      psync_free(errMsg);
     }
     else {
       debug(D_NOTICE, "Not a first login. Run sync event.");

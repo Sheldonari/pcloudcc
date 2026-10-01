@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 project(pcloudcc)
 
 #INCLUDE(CPack)
@@ -62,6 +62,12 @@ add_executable(pcloudcc main.cpp)
 target_link_libraries(pcloudcc pcloudcc_lib)
 
 target_link_libraries(pcloudcc ${Boost_LIBRARIES})
+
+# Installed binary lives in <prefix>/bin; shared lib in <prefix>/lib.
+# CachyOS/Arch ld.so does not search /usr/local/lib by default.
+set_target_properties(pcloudcc PROPERTIES
+  INSTALL_RPATH "\$ORIGIN/../lib"
+)
 
 link_directories(${PCLSYNC_PATH} ${MBEDTLS_PATH}/library ${SQLITE3_PATH} ${OVERLAY_CLENT_PATH})
 

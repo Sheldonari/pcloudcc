@@ -439,7 +439,7 @@ static int stat_and_create_local(psync_syncid_t syncid, psync_fileid_t fileid, p
       psync_sql_bind_uint(sql, 1, localfileid);
       psync_sql_run_free(sql);
     }
-    psync_sql_commit_transaction(sql);
+    psync_sql_commit_transaction();
     psync_file_delete(name);
     if (row)
       debug(D_NOTICE, "fileid %lu (%s) got moved out of download folder while finishing download, deleting %s", (unsigned long)fileid, filename, name);

@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 
 namespace cc  = console_client;
@@ -183,6 +184,12 @@ static void status_change(pstatus_t* status) {
     psync_set_user_pass(clib::pclsync_lib::get_lib().get_username().c_str(), clib::pclsync_lib::get_lib().get_password().c_str(), (int) clib::pclsync_lib::get_lib().save_pass_);
     std::cout << "logging in" << std::endl;
   }
+  else if (status->status==PSTATUS_BAD_LOGIN_TOKEN){
+    if (clib::pclsync_lib::get_lib().get_password().empty())
+      clib::pclsync_lib::get_lib().get_pass_from_console();
+    psync_set_user_pass(clib::pclsync_lib::get_lib().get_username().c_str(), clib::pclsync_lib::get_lib().get_password().c_str(), (int) clib::pclsync_lib::get_lib().save_pass_);
+    std::cout << "saved token rejected, logging in with password" << std::endl;
+  }
   else if (status->status==PSTATUS_BAD_LOGIN_DATA){
     if (!clib::pclsync_lib::get_lib().newuser_) {
       clib::pclsync_lib::get_lib().get_pass_from_console();
@@ -252,7 +259,14 @@ int clib::pclsync_lib::init()//std::string& username, std::string& password, std
  
   
   if (psync_init()){
-    std::cout <<"init failed\n"; 
+    uint32_t last_error = psync_get_last_error();
+    // #region agent log
+    {FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"post-fix\",\"hypothesisId\":\"B\",\"location\":\"pclsync_lib.cpp:init\",\"message\":\"psync_init returned failure\",\"data\":{\"last_error\":%u},\"timestamp\":%ld}\n", (unsigned)last_error, (long)time(NULL)*1000); fclose(_dbg);} }
+    // #endregion
+    if (last_error == PERROR_DATABASE_OPEN)
+      std::cout << "init failed: database is locked (another pcloudcc instance is already running)\n";
+    else
+      std::cout << "init failed (error " << last_error << ")\n";
     return 1;
   }
   

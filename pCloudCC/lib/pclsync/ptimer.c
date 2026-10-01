@@ -164,7 +164,7 @@ time_t psync_timer_time(){
   if (timer_running)
     return psync_current_time;
   else
-    return psync_time(NULL);
+    return psync_time();
 }
 
 void psync_timer_wake(){

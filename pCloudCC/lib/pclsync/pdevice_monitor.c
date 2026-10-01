@@ -21,7 +21,9 @@
 static pthread_mutex_t devmon_mutex=PTHREAD_MUTEX_INITIALIZER;
 static psync_timer_t devmon_activity_timer=NULL;
 
-void devmon_activity_timer_action(){
+void devmon_activity_timer_action(psync_timer_t timer, void *ptr){
+  (void)timer;
+  (void)ptr;
   psync_timer_stop(devmon_activity_timer);
   pthread_mutex_lock(&devmon_mutex);
   devmon_activity_timer=NULL;

@@ -37,6 +37,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <time.h>
 
 #define return_error(err) do {psync_error=err; return -1;} while (0)
 
@@ -406,12 +407,18 @@ int psync_sql_connect(const char *db){
   debug(D_NOTICE, "Using sqlite version %s source %s", sqlite3_libversion(), sqlite3_sourceid());
   if (!sqlite3_threadsafe()){
     debug(D_CRITICAL, "sqlite is compiled without thread support");
+    // #region agent log
+    {FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"pre-fix\",\"hypothesisId\":\"B\",\"location\":\"plibs.c:psync_sql_connect\",\"message\":\"sqlite not threadsafe\",\"data\":{},\"timestamp\":%ld}\n", (long)time(NULL)*1000); fclose(_dbg);} }
+    // #endregion
     return -1;
   }
   if (psync_stat(db, &st)!=0)
     initdbneeded=1;
 
   code=sqlite3_open(db, &psync_db);
+  // #region agent log
+  {FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"pre-fix\",\"hypothesisId\":\"B\",\"location\":\"plibs.c:psync_sql_connect\",\"message\":\"sqlite3_open\",\"data\":{\"code\":%d,\"initdbneeded\":%d,\"threadsafe\":%d,\"db\":\"%s\"},\"timestamp\":%ld}\n", code, initdbneeded, sqlite3_threadsafe(), db?db:"(null)", (long)time(NULL)*1000); fclose(_dbg);} }
+  // #endregion
   if (likely(code==SQLITE_OK)){
     if (initmutex){
       psync_rwlock_init(&psync_db_lock);
@@ -429,6 +436,9 @@ int psync_sql_connect(const char *db){
       return psync_sql_statement(PSYNC_DATABASE_STRUCTURE);
     else if (psync_sql_statement("DELETE FROM setting WHERE id='justcheckingiflocked'")){
       debug(D_ERROR, "database is locked");
+      // #region agent log
+      {FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"post-fix\",\"hypothesisId\":\"B\",\"location\":\"plibs.c:psync_sql_connect:locked\",\"message\":\"lock probe failed\",\"data\":{\"errmsg\":\"%s\",\"code\":%d},\"timestamp\":%ld}\n", sqlite3_errmsg(psync_db), sqlite3_errcode(psync_db), (long)time(NULL)*1000); fclose(_dbg);} }
+      // #endregion
       sqlite3_close(psync_db);
       psync_rwlock_destroy(&psync_db_lock);
       return -1;

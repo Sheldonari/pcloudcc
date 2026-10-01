@@ -429,9 +429,16 @@ char *psync_get_pcloud_path(){
   char *path;
   psync_stat_t st;
   path=psync_get_pcloud_path_nc();
-  if (unlikely_log(!path))
+  if (unlikely_log(!path)){
+    // #region agent log
+    {const char *_home=getenv("HOME"); FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"pre-fix\",\"hypothesisId\":\"A\",\"location\":\"pcompat.c:psync_get_pcloud_path\",\"message\":\"get_pcloud_path_nc failed\",\"data\":{\"home\":\"%s\",\"uid\":%d,\"errno\":%d},\"timestamp\":%ld}\n", _home?_home:"(null)", (int)getuid(), errno, (long)time(NULL)*1000); fclose(_dbg);} }
+    // #endregion
     return NULL;
+  }
   if (psync_stat(path, &st) && unlikely_log(psync_mkdir(path))){
+    // #region agent log
+    {FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"pre-fix\",\"hypothesisId\":\"E\",\"location\":\"pcompat.c:psync_get_pcloud_path\",\"message\":\"mkdir pcloud dir failed\",\"data\":{\"path\":\"%s\",\"errno\":%d},\"timestamp\":%ld}\n", path, errno, (long)time(NULL)*1000); fclose(_dbg);} }
+    // #endregion
     psync_free(path);
     return NULL;
   }

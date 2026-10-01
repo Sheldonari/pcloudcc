@@ -36,6 +36,8 @@
 #include "pmemlock.h"
 #include <pthread.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <time.h>
 #include <polarssl/ctr_drbg.h>
 #include <polarssl/entropy.h>
 #include <polarssl/ssl.h>
@@ -140,17 +142,26 @@ static int psync_ssl_detect_aes_hw(){
 int psync_ssl_init(){
   unsigned char seed[PSYNC_LHASH_DIGEST_LEN];
   psync_uint_t i;
+  int mutex_rc, drbg_rc;
 #if defined(PSYNC_AES_HW)
   psync_ssl_hw_aes=psync_ssl_detect_aes_hw();
 #else
   debug(D_NOTICE, "hardware AES is not supported for this compiler");
 #endif
-  if (pthread_mutex_init(&psync_mbed_rng.mutex, NULL))
+  mutex_rc=pthread_mutex_init(&psync_mbed_rng.mutex, NULL);
+  // #region agent log
+  {FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"pre-fix\",\"hypothesisId\":\"C\",\"location\":\"pssl-mbedtls.c:psync_ssl_init\",\"message\":\"mutex_init\",\"data\":{\"rc\":%d},\"timestamp\":%ld}\n", mutex_rc, (long)time(NULL)*1000); fclose(_dbg);} }
+  // #endregion
+  if (mutex_rc)
     return PRINT_RETURN(-1);
   entropy_init(&psync_mbed_entropy);
   psync_get_random_seed(seed, seed, sizeof(seed), 0);
   entropy_update_manual(&psync_mbed_entropy, seed, sizeof(seed));
-  if (ctr_drbg_init(&psync_mbed_rng.rnd, entropy_func, &psync_mbed_entropy, NULL, 0))
+  drbg_rc=ctr_drbg_init(&psync_mbed_rng.rnd, entropy_func, &psync_mbed_entropy, NULL, 0);
+  // #region agent log
+  {FILE *_dbg=fopen("/home/nicolay/Projects/pcloudcc/.cursor/debug-bcb9a0.log","a"); if(_dbg){fprintf(_dbg,"{\"sessionId\":\"bcb9a0\",\"runId\":\"pre-fix\",\"hypothesisId\":\"C\",\"location\":\"pssl-mbedtls.c:psync_ssl_init\",\"message\":\"ctr_drbg_init\",\"data\":{\"rc\":%d},\"timestamp\":%ld}\n", drbg_rc, (long)time(NULL)*1000); fclose(_dbg);} }
+  // #endregion
+  if (drbg_rc)
     return PRINT_RETURN(-1);
   x509_crt_init(&psync_mbed_trusted_certs_x509);
   for (i=0; i<ARRAY_SIZE(psync_ssl_trusted_certs); i++)
